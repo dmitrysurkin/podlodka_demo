@@ -11,7 +11,7 @@ BUILD_TIMEOUT_SEC="${BUILD_TIMEOUT_SEC:-1800}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
-    echo "Не найдена команда '$1'. Установи ее и попробуй снова."
+    echo "Не найдена команда '$1'. Установи ее и попробуй снова." >&2
     exit 1
   fi
 }
@@ -20,9 +20,9 @@ run_gcloud() {
   local output
 
   if ! output=$(gcloud "$@" 2>&1); then
-    echo "Команда gcloud завершилась с ошибкой:"
-    echo "gcloud $*"
-    echo "$output"
+    echo "Команда gcloud завершилась с ошибкой:" >&2
+    echo "gcloud $*" >&2
+    echo "$output" >&2
     exit 1
   fi
 
@@ -32,6 +32,9 @@ run_gcloud() {
 require_cmd gcloud
 require_cmd docker
 
+echo "PROJECT_ID=$PROJECT_ID"
+echo "REGION=$REGION"
+echo "BUILD_TRIGGER=$BUILD_TRIGGER"
 echo "[1/4] Запускаю Cloud Build trigger '$BUILD_TRIGGER'..."
 
 BUILD_ID=$(run_gcloud builds triggers run "$BUILD_TRIGGER" \
