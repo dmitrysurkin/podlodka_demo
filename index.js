@@ -5,4 +5,6 @@ const sum = numbers.reduce((total, value) => total + value, 0);
 
 console.log("Сумма:", sum);
 
-throw new Error("Это запланированная ошибка");
+setTimeout(() => {
+    throw new Error("Это запланированная ошибка");
+}, 10000);
