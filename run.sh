@@ -6,25 +6,51 @@ REGION="global"
 IMAGE="gcr.io/$PROJECT_ID/podlodka-demo:latest"
 CONTAINER="podlodka-demo"
 BUILD_TRIGGER="${BUILD_TRIGGER:-podlodka-demo}"
+POLL_INTERVAL_SEC="${POLL_INTERVAL_SEC:-10}"
+BUILD_TIMEOUT_SEC="${BUILD_TIMEOUT_SEC:-1800}"
+
+require_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "Не найдена команда '$1'. Установи ее и попробуй снова."
+    exit 1
+  fi
+}
+
+run_gcloud() {
+  local output
+
+  if ! output=$(gcloud "$@" 2>&1); then
+    echo "Команда gcloud завершилась с ошибкой:"
+    echo "gcloud $*"
+    echo "$output"
+    exit 1
+  fi
+
+  printf '%s\n' "$output"
+}
+
+require_cmd gcloud
+require_cmd docker
 
 echo "[1/4] Запускаю Cloud Build trigger '$BUILD_TRIGGER'..."
 
-BUILD_ID=$(gcloud builds triggers run "$BUILD_TRIGGER" \
+BUILD_ID=$(run_gcloud builds triggers run "$BUILD_TRIGGER" \
   --project="$PROJECT_ID" \
   --region="$REGION" \
-  --format="value(metadata.build.id)" 2>/dev/null)
+  --format="value(metadata.build.id)")
 
 if [ -z "$BUILD_ID" ]; then
-  echo "Не удалось получить BUILD_ID. Проверь имя trigger и авторизацию gcloud."
+  echo "Не удалось получить BUILD_ID. Проверь имя trigger, регион и авторизацию gcloud."
   exit 1
 fi
 
 echo "[2/4] Ожидаю завершения билда $BUILD_ID..."
+SECONDS_WAITED=0
 while true; do
-  STATUS=$(gcloud builds describe "$BUILD_ID" \
+  STATUS=$(run_gcloud builds describe "$BUILD_ID" \
     --project="$PROJECT_ID" \
     --region="$REGION" \
-    --format="value(status)" 2>/dev/null)
+    --format="value(status)")
   echo "Статус: $STATUS"
   case "$STATUS" in
     SUCCESS)
@@ -36,7 +62,14 @@ while true; do
       exit 1
       ;;
   esac
-  sleep 10
+
+  if [ "$SECONDS_WAITED" -ge "$BUILD_TIMEOUT_SEC" ]; then
+    echo "Превышено время ожидания билда: ${BUILD_TIMEOUT_SEC}s"
+    exit 1
+  fi
+
+  sleep "$POLL_INTERVAL_SEC"
+  SECONDS_WAITED=$((SECONDS_WAITED + POLL_INTERVAL_SEC))
 done
 
 echo "[3/4] Обновляю локальный контейнер '$CONTAINER'..."
