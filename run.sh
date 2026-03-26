@@ -3,9 +3,9 @@ set -euo pipefail
 
 PROJECT_ID="x-trading-476913"
 REGION="global"
-IMAGE="gcr.io/$PROJECT_ID/podlodka-demo:latest"
-CONTAINER="podlodka-demo"
-BUILD_TRIGGER="${BUILD_TRIGGER:-podlodka-demo}"
+IMAGE="gcr.io/$PROJECT_ID/helloWorld:latest"
+CONTAINER="helloWorld"
+BUILD_TRIGGER="${BUILD_TRIGGER:-helloWorld}"
 POLL_INTERVAL_SEC="${POLL_INTERVAL_SEC:-10}"
 BUILD_TIMEOUT_SEC="${BUILD_TIMEOUT_SEC:-1800}"
 
