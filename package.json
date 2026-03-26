@@ -1,0 +1,10 @@
+{
+  "name": "podlodka-demo",
+  "version": "1.0.0",
+  "description": "Минимальный npm пакет с преднамеренной ошибкой",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "license": "MIT"
+}
